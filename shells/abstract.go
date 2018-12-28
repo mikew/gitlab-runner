@@ -110,8 +110,7 @@ func (b *AbstractShell) writeFetchCmd(w ShellWriter, build *common.Build, projec
 	w.RmFile(".git/hooks/post-checkout")
 	w.EndIf()
 
-	w.Command("git", "clean", "-ffdx")
-	w.Command("git", "reset", "--hard")
+	w.Command("git", "checkout", "--", ".")
 	w.Command("git", "remote", "set-url", "origin", build.GetRemoteURL())
 	if depth != "" {
 		var refspec string
