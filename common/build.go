@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -122,22 +123,7 @@ func (b *Build) ProjectSlug() (string, error) {
 }
 
 func (b *Build) ProjectUniqueDir(sharedDir bool) string {
-	dir, err := b.ProjectSlug()
-	if err != nil {
-		dir = fmt.Sprintf("project-%d", b.JobInfo.ProjectID)
-	}
-
-	// for shared dirs path is constructed like this:
-	// <some-path>/runner-short-id/concurrent-id/group-name/project-name/
-	// ex.<some-path>/01234567/0/group/repo/
-	if sharedDir {
-		dir = path.Join(
-			fmt.Sprintf("%s", b.Runner.ShortDescription()),
-			fmt.Sprintf("%d", b.ProjectRunnerID),
-			dir,
-		)
-	}
-	return dir
+	return BNWGetDirName(b.GitInfo.RepoURL, b.GitInfo.Ref)
 }
 
 func (b *Build) FullProjectDir() string {
@@ -705,4 +691,10 @@ func (b *Build) IsFeatureFlagOn(name string) bool {
 	}
 
 	return on
+}
+
+func BNWGetDirName(repoURL string, refName string) string {
+	r := regexp.MustCompile(".+://[^/]+/(.+)/(.+).git$")
+	m := r.FindStringSubmatch(repoURL)
+	return fmt.Sprintf("ci--%s--%s--%s", strings.Replace(m[1], "/", "--", -1), m[2], refName)
 }
